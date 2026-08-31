@@ -151,6 +151,50 @@
     padding: 60px 20px;
     font-size: 0.98rem;
   }
+  .card .photo{ cursor: zoom-in; }
+
+  #lightbox{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 17, 14, 0.82);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  #lightbox.open{ display: flex; }
+  #lightbox img{
+    max-width: min(90vw, 640px);
+    max-height: 85vh;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  #lightbox .lb-close{
+    position: absolute;
+    top: 22px;
+    right: 26px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.92);
+    color: var(--ink);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #lightbox .lb-caption{
+    position: absolute;
+    bottom: 28px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #F2EDE3;
+    font-size: 0.9rem;
+  }
   footer{
     max-width: 1080px;
     margin: 0 auto;
@@ -181,6 +225,12 @@
 </main>
 
 <footer>Data is pulled from a Google Sheet and refreshes automatically — no need to touch this page to update stock.</footer>
+
+<div id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="Close preview">&times;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lb-caption" id="lbCaption"></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
@@ -233,6 +283,8 @@
       const sizes = splitList(item["Sizes Available"]);
       const img = resolveImage(item["Photo"]);
 
+      const caption = `Art no. ${art}${colors.length ? ' — ' + colors.join(' / ') : ''}`;
+
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
@@ -242,6 +294,7 @@
           <p class="colors">${colors.join(' / ') || 'Colour not set'}</p>
           <div class="chips">${sizes.map(s => `<span class="chip">Size ${s}</span>`).join('')}</div>
         </div>`;
+      card.querySelector('.photo').addEventListener('click', () => openLightbox(img, caption));
       grid.appendChild(card);
     }
   }
@@ -284,6 +337,23 @@
     document.getElementById('filterSize').value = "";
     document.getElementById('filterColor').value = "";
     applyFilters();
+  });
+
+  function openLightbox(src, caption){
+    document.getElementById('lbImg').src = src;
+    document.getElementById('lbCaption').textContent = caption;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox(){
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lbImg').src = "";
+  }
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', (e) => {
+    if (e.target.id === 'lightbox') closeLightbox(); // click on the dark backdrop
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
   });
 
   function boot(items){
